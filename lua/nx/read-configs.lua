@@ -17,7 +17,7 @@ local read_nx = function()
 end
 
 local read_workspace = function()
-	_G.nx.nx = rf './workspace.json'
+	_G.nx.workspace = rf './workspace.json'
 end
 
 local read_projects = function()
