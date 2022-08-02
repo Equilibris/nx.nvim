@@ -1,18 +1,18 @@
 _G.nx = {
 	workspace = nil,
 	nx = nil,
-	log = ' ',
+	projects = {},
+
+	cache = { actions = {} },
 }
 
 local readers = require 'nx.read-configs'
 
 local setup = function(config)
-	if config.read_init or false then
+	if config.read_init or true then
 		readers.read_nx_root()
-	end
 
-	if config.register_tert or true then
-		print 'hello world'
+		require 'nx.on-project-mod'()
 	end
 end
 
