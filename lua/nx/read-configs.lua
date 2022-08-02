@@ -17,7 +17,7 @@ local read_nx = function()
 end
 
 local read_workspace = function()
-	_G.nx.nx = rf './workspace.json'
+	_G.nx.workspace = rf './workspace.json'
 end
 
 local read_projects = function()
@@ -32,7 +32,9 @@ local read_nx_root = function()
 	read_nx()
 	read_workspace()
 
-	read_projects()
+	if _G.nx.workspace ~= nil then
+		read_projects()
+	end
 end
 
 return {

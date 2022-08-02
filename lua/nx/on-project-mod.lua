@@ -2,10 +2,10 @@ local on_project_mod = function()
 	local actions = {}
 	for key, proj in pairs(_G.nx.projects) do
 		for name, target in pairs(proj.targets or {}) do
-			table.insert(actions, proj .. ':' .. name)
+			table.insert(actions, key .. ':' .. name)
 
 			for config, _ in pairs(target.configurations or {}) do
-				table.insert(actions, proj .. ':' .. name .. ':' .. config)
+				table.insert(actions, key .. ':' .. name .. ':' .. config)
 			end
 		end
 	end
