@@ -32,7 +32,9 @@ local read_nx_root = function()
 	read_nx()
 	read_workspace()
 
-	read_projects()
+	if _G.nx.workspace ~= nil then
+		read_projects()
+	end
 end
 
 return {
