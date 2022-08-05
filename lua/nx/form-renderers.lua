@@ -7,29 +7,6 @@
 -- 2. A component renderer;
 --		a component that renders induvitual components standalone
 
-_G.dump = function(o, level)
-	level = level or 1
-
-	local indent = string.rep('  ', level)
-
-	if type(o) == 'table' then
-		local s = '{\n'
-		for k, v in pairs(o) do
-			if type(k) ~= 'number' then
-				k = '"' .. k .. '"'
-			end
-			s = s .. indent .. '[' .. k .. '] = ' .. dump(v, level + 1) .. ',\n'
-		end
-		return s .. indent .. '}'
-	else
-		return tostring(o)
-	end
-end
-
-_G.pd = function(o)
-	print(dump(o))
-end
-
 local pickers = require 'telescope.pickers'
 local finders = require 'telescope.finders'
 local conf = require('telescope.config').values
@@ -228,54 +205,6 @@ _M.telescope_form_renderer = function(opts)
 	end
 
 	return renderer
-end
-
-_G.test = function()
-	_M.telescope_form_renderer()(
-		vim.json.decode [[
-{
-	"$schema": "http://json-schema.org/schema",
-	"cli": "nx",
-	"$id": "styled-component",
-	"type": "object",
-	"properties": {
-		"project": {
-			"type": "string",
-			"description": "The name of the project.",
-			"alias": "p",
-			"$default": {
-				"$source": "projectName"
-			},
-			"x-prompt": "What is the name of the project for this component?"
-		},
-		"name": {
-			"type": "string",
-			"description": "The name of the component.",
-			"$default": {
-				"$source": "argv",
-				"index": 0
-			},
-			"x-prompt": "What name would you like to use for the component?",
-			"pattern": "^[A-Z][a-zA-Z].*$"
-		},
-		"component": {
-			"type": "string",
-			"description": "The name of the parent component.",
-			"x-prompt": "What name would you like to use as the parent component?"
-		},
-		"mui": {
-			"type": "boolean",
-			"description": "Use MUI.",
-			"default": false
-		}
-	},
-	"required": ["name", "project", "component"]
-}
-]],
-		nil,
-		nil,
-		{}
-	)
 end
 
 return _M
