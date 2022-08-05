@@ -11,8 +11,6 @@ local pickers = require 'telescope.pickers'
 local finders = require 'telescope.finders'
 local conf = require('telescope.config').values
 
-local entry_display = require 'telescope.pickers.entry_display'
-
 local actions = require 'telescope.actions'
 local action_state = require 'telescope.actions.state'
 
@@ -34,27 +32,6 @@ local make_entry = function(opts, internal_state)
 			return { value = entry, display = x .. mod, ordinal = x }
 		end
 	end
-	-- local displayer = entry_display.create {
-	-- 	separator = ' ',
-	-- 	items = {
-	-- 		{ width = 8 },
-	-- 		{ remaining = true },
-	-- 	},
-	-- }
-
-	-- return function(entry)
-	-- 	if entry.is_done then
-	-- 		return displayer {
-	-- 			{ '', 'TelescopeResultsIdentifier' },
-	-- 			'submit',
-	-- 		}
-	-- 	else
-	-- 		return displayer {
-	-- 			{ entry.type, 'TelescopeResultsIdentifier' },
-	-- 			entry.key,
-	-- 		}
-	-- 	end
-	-- end
 end
 
 _M.telescope_form_renderer = function(opts)
