@@ -3,12 +3,13 @@ _G.nx = {
 	nx = nil,
 	projects = {},
 
-	cache = { actions = {} },
+	cache = { actions = {}, targets = {}, targets_flat = {} },
 
 	log = '',
 
 	nx_cmd_root = 'nx',
 	command_runner = require('nx.command-runners').terminal_command_runner(),
+	form_renderer = require('nx.form-renderers').telescope_form_renderer(),
 }
 
 local readers = require 'nx.read-configs'
@@ -21,6 +22,9 @@ local setup = function(config)
 	end
 	if config.command_runner ~= nil then
 		_G.nx.command_runner = config.command_runner
+	end
+	if config.form_renderer ~= nil then
+		_G.nx.form_renderer = config.form_renderer
 	end
 
 	if config.read_init or true then
