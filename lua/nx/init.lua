@@ -3,7 +3,7 @@ _G.nx = {
 	nx = nil,
 	projects = {},
 
-	cache = { actions = {}, targets = {}, targets_flat = {} },
+	cache = { actions = {}, targets = {} },
 
 	log = '',
 

@@ -1,26 +1,13 @@
 local _M = {}
 
+local utils = require 'nx.utils'
+
 local pickers = require 'telescope.pickers'
 local finders = require 'telescope.finders'
 local conf = require('telescope.config').values
 
 local actions = require 'telescope.actions'
 local action_state = require 'telescope.actions.state'
-
-local deepcopy =function (orig)
-    local orig_type = type(orig)
-    local copy
-    if orig_type == 'table' then
-        copy = {}
-        for orig_key, orig_value in next, orig, nil do
-            copy[deepcopy(orig_key)] = deepcopy(orig_value)
-        end
-        setmetatable(copy, deepcopy(getmetatable(orig)))
-    else -- number, string, boolean, etc
-        copy = orig
-    end
-    return copy
-end
 
 local multirun_schema = vim.json.decode [[
 {
@@ -34,8 +21,7 @@ local multirun_schema = vim.json.decode [[
 			"items": {
 				"type": "string",
 				"$default": {
-					"$source": "argv",
-					"index": 0
+					"$source": "projectName"
 				}
 			}
 		},
@@ -44,8 +30,7 @@ local multirun_schema = vim.json.decode [[
 			"items": {
 				"type": "string",
 				"$default": {
-					"$source": "argv",
-					"index": 0
+					"$source": "projectName"
 				}
 			}
 		},
@@ -61,50 +46,84 @@ local multirun_schema = vim.json.decode [[
 		"skip-nx-cache": {
 			"type": "boolean"
 		},
-		"paralell": {
-		"type": "number",
+		"parallel": {
+			"type": "number",
 			"default": 3
-		},
-		"routing": {
-			"type": "boolean",
-			"default": false
 		}
 	}
 }
 ]]
 
-_M.run_many = function(opts)
-	opts = opts or {}
-	pickers.new(opts, {
-		prompt_title = 'Pick target',
-		finder = finders.new_table {
-			results = _G.nx.cache.targets_flat,
-		},
-		sorter = conf.generic_sorter(opts),
-		attach_mappings = function(prompt_bufnr, map)
-			actions.select_default:replace(function()
-				actions.close(prompt_bufnr)
-				local selection = action_state.get_selected_entry().value
+local multi_builder = function(title, cmd)
+	return function(opts)
+		opts = opts or {}
+		pickers.new(opts, {
+			prompt_title = 'Pick target for ' .. title,
+			finder = finders.new_table {
+				results = utils.keys(_G.nx.cache.targets),
+			},
+			sorter = conf.generic_sorter(opts),
+			attach_mappings = function(prompt_bufnr, map)
+				actions.select_default:replace(function()
+					actions.close(prompt_bufnr)
+					local selection = action_state.get_selected_entry().value
 
-				local config = multirun_schema
+					local config = multirun_schema
 
-				local _configurations = _G.nx.cache.actions[selection]
-				local configurations = {}
+					local configs = utils.keys(_G.nx.cache.targets[selection])
+					if #configs > 0 then
+						config.properties.configuration = {
+							type = 'string',
+							enum = configs,
+						}
+					end
 
-				for key, _ in pairs(_configurations) do
-					table.insert(key)
-				end
+					_G.nx.form_renderer(
+						config,
+						title .. ' options',
+						function(form_result)
+							if form_result.exclude then
+								form_result.exclude = table.concat(
+									form_result.exclude,
+									','
+								)
+							end
+							if form_result.exclude then
+								form_result.projects = table.concat(
+									form_result.projects,
+									','
+								)
+							end
 
-				-- print(vim.inspect(selection))
+							local s = _G.nx.nx_cmd_root
+								.. ' '
+								.. cmd
+								.. ' --target='
+								.. selection
 
-				-- _G.nx.command_runner(
-				-- 	_G.nx.nx_cmd_root .. ' run ' .. selection[1]
-				-- )
-			end)
-			return true
-		end,
-	}):find()
+							for key, value in pairs(form_result) do
+								if value ~= nil then
+									s = s
+										.. ' --'
+										.. key
+										.. '='
+										.. tostring(value)
+								end
+							end
+
+							_G.nx.command_runner(s)
+						end,
+						{}
+					)
+				end)
+				return true
+			end,
+		}):find()
+	end
 end
+
+_M.run_many = multi_builder('Run many', 'run-many')
+_M.affected = multi_builder('Run many', 'affected')
 
 _G.test = function()
 	_M.run_many()
