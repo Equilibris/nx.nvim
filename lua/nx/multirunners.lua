@@ -125,8 +125,4 @@ end
 _M.run_many = multi_builder('Run many', 'run-many')
 _M.affected = multi_builder('Run many', 'affected')
 
-_G.test = function()
-	_M.run_many()
-end
-
 return _M
