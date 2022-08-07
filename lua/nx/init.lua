@@ -57,7 +57,7 @@ local setup = function(config)
 	if config.form_renderer ~= nil then
 		_G.nx.form_renderer = config.form_renderer
 	else
-		_G.nx.command_runner = default_config.command_runner
+		_G.nx.form_renderer = default_config.command_runner
 	end
 
 	if config.read_init or true then
