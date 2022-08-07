@@ -9,6 +9,10 @@ local conf = require('telescope.config').values
 local actions = require 'telescope.actions'
 local action_state = require 'telescope.actions.state'
 
+---Make generator entry
+---
+---@param entry table
+---@return table
 local make_entry = function(entry)
 	local x = entry.package .. ' ' .. entry.name
 	return {
@@ -18,6 +22,8 @@ local make_entry = function(entry)
 	}
 end
 
+---Run a given generator
+---@param generator Generator
 _M.run_generator = function(generator)
 	_G.nx.form_renderer(generator.schema, nil, function(form_result)
 		local s = _G.nx.nx_cmd_root .. ' ' .. generator.run_cmd
@@ -31,7 +37,12 @@ _M.run_generator = function(generator)
 		_G.nx.command_runner(s)
 	end, {})
 end
-
+---Constructs a generator builder with a source generator
+---
+---@alias GeneratorSourceFun fun(): Generator[]
+---@param source GeneratorSourceFun
+---
+---@return function
 local generator_builder = function(source)
 	return function(opts)
 		opts = opts or {}
@@ -56,12 +67,23 @@ local generator_builder = function(source)
 	end
 end
 
+---Prompts workspace generators
+---
+---@type function
 _M.workspace_generators = generator_builder(function()
 	return _G.nx.generators.workspace
 end)
+
+---Prompts external generators
+---
+---@type function
 _M.external_generators = generator_builder(function()
 	return _G.nx.generators.external
 end)
+
+---Prompts generators
+---
+---@type function
 _M.generators = generator_builder(function()
 	local x = {}
 	for _, value in ipairs(_G.nx.generators.external) do

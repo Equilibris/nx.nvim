@@ -1,3 +1,4 @@
+---Reloads actions and targets config
 local on_project_mod = function()
 	local actions = {}
 	local targets = {}

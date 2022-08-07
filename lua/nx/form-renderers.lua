@@ -17,6 +17,10 @@ local action_state = require 'telescope.actions.state'
 
 local _M = {}
 
+---Make entry for object handeler
+---@param opts table
+---@param internal_state table
+---@return fun(entry: table): table
 local make_entry = function(opts, internal_state)
 	return function(entry)
 		if entry.is_done then
@@ -46,7 +50,11 @@ local get_enum_values_from_form = function(form)
 	return enum_value
 end
 
-_M.telescope_form_renderer = function(opts)
+---Construct and bootstrap a form-renderer using telescope
+---@param opts table | nil
+---@return form_renderer
+_M.telescope = function(opts)
+	---@type form_renderer
 	local renderer
 
 	local object_handeler = function(form, title, callback, state)

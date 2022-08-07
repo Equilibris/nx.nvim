@@ -27,21 +27,26 @@ _M.rf = function(fname)
 
 	local table = vim.json.decode(s)
 
+	f:close()
 	return table
 end
 
+---Reads nx.json and sets its global var
 _M.read_nx = function()
 	_G.nx.nx = _M.rf './nx.json'
 end
 
+---Reads workspace.json and sets its global var
 _M.read_workspace = function()
 	_G.nx.workspace = _M.rf './workspace.json'
 end
 
+---Reads package.json and sets its global var
 _M.read_package_json = function()
 	_G.nx.package_json = _M.rf './package.json'
 end
 
+---Reads all projects configurations
 _M.read_projects = function()
 	for key, value in pairs(_G.nx.workspace.projects or {}) do
 		local v = _M.rf(value .. '/project.json')
@@ -50,6 +55,7 @@ _M.read_projects = function()
 	end
 end
 
+---Reads workspace generators
 _M.read_workspace_generators = function()
 	local gens = {}
 
@@ -68,6 +74,7 @@ _M.read_workspace_generators = function()
 	_G.nx.generators.workspace = gens
 end
 
+---Reads node_modules generators (only those specified in package.json, not lock)
 _M.read_external_generators = function()
 	local deps = {}
 	for _, value in ipairs(utils.keys(_G.nx.package_json.dependencies)) do
@@ -107,6 +114,7 @@ _M.read_external_generators = function()
 	_G.nx.generators.external = gens
 end
 
+---Reads all configs
 _M.read_nx_root = function()
 	_M.read_nx()
 	_M.read_workspace()

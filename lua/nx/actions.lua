@@ -7,11 +7,14 @@ local conf = require('telescope.config').values
 local actions = require 'telescope.actions'
 local action_state = require 'telescope.actions.state'
 
+---Runs designated action
+---@param action string
 _M.run_action = function(action)
 	_G.nx.command_runner(_G.nx.nx_cmd_root .. ' run ' .. action)
 end
 
--- our picker function: colors
+---Prompts user for actions
+---@param opts table
 _M.actions_finder = function(opts)
 	opts = opts or {}
 	pickers.new(opts, {
