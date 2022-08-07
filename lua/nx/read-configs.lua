@@ -59,8 +59,8 @@ _M.read_workspace_generators = function()
 			table.insert(gens, {
 				schema = schema,
 				name = value,
-				run_cmd = 'workspace-genetator ' .. value,
-				package = 'workspace-genetator',
+				run_cmd = 'workspace-generator ' .. value,
+				package = 'workspace-generator',
 			})
 		end
 	end
