@@ -54,6 +54,48 @@ local multirun_schema = vim.json.decode [[
 }
 ]]
 
+_M.multirun_with_target = function(cmd, selection, title)
+	title = title or ''
+
+	local config = utils.deepcopy(multirun_schema)
+
+	local configs = utils.keys(_G.nx.cache.targets[selection])
+	if #configs > 0 then
+		config.properties.configuration = {
+			type = 'string',
+			enum = configs,
+		}
+	end
+
+	_G.nx.form_renderer(
+		config,
+		(title and title .. ' options'),
+		function(form_result)
+			if form_result.exclude then
+				form_result.exclude = table.concat(form_result.exclude, ',')
+			end
+			if form_result.exclude then
+				form_result.projects = table.concat(form_result.projects, ',')
+			end
+
+			local s = _G.nx.nx_cmd_root
+				.. ' '
+				.. cmd
+				.. ' --target='
+				.. selection
+
+			for key, value in pairs(form_result) do
+				if value ~= nil then
+					s = s .. ' --' .. key .. '=' .. tostring(value)
+				end
+			end
+
+			_G.nx.command_runner(s)
+		end,
+		{}
+	)
+end
+
 local multi_builder = function(title, cmd)
 	return function(opts)
 		opts = opts or {}
@@ -68,53 +110,7 @@ local multi_builder = function(title, cmd)
 					actions.close(prompt_bufnr)
 					local selection = action_state.get_selected_entry().value
 
-					local config = multirun_schema
-
-					local configs = utils.keys(_G.nx.cache.targets[selection])
-					if #configs > 0 then
-						config.properties.configuration = {
-							type = 'string',
-							enum = configs,
-						}
-					end
-
-					_G.nx.form_renderer(
-						config,
-						title .. ' options',
-						function(form_result)
-							if form_result.exclude then
-								form_result.exclude = table.concat(
-									form_result.exclude,
-									','
-								)
-							end
-							if form_result.exclude then
-								form_result.projects = table.concat(
-									form_result.projects,
-									','
-								)
-							end
-
-							local s = _G.nx.nx_cmd_root
-								.. ' '
-								.. cmd
-								.. ' --target='
-								.. selection
-
-							for key, value in pairs(form_result) do
-								if value ~= nil then
-									s = s
-										.. ' --'
-										.. key
-										.. '='
-										.. tostring(value)
-								end
-							end
-
-							_G.nx.command_runner(s)
-						end,
-						{}
-					)
+					_M.multirun_with_target(cmd, selection, title)
 				end)
 				return true
 			end,
