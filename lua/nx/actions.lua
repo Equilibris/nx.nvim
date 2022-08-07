@@ -1,3 +1,5 @@
+local _M = {}
+
 local pickers = require 'telescope.pickers'
 local finders = require 'telescope.finders'
 local conf = require('telescope.config').values
@@ -5,8 +7,12 @@ local conf = require('telescope.config').values
 local actions = require 'telescope.actions'
 local action_state = require 'telescope.actions.state'
 
+_M.run_action = function(action)
+	_G.nx.command_runner(_G.nx.nx_cmd_root .. ' run ' .. action)
+end
+
 -- our picker function: colors
-local actions_finder = function(opts)
+_M.actions_finder = function(opts)
 	opts = opts or {}
 	pickers.new(opts, {
 		prompt_title = 'Run Action',
@@ -18,16 +24,12 @@ local actions_finder = function(opts)
 			actions.select_default:replace(function()
 				actions.close(prompt_bufnr)
 				local selection = action_state.get_selected_entry()
+				_M.run_action(selection[1])
 				-- print(vim.inspect(selection))
-				_G.nx.command_runner(
-					_G.nx.nx_cmd_root .. ' run ' .. selection[1]
-				)
 			end)
 			return true
 		end,
 	}):find()
 end
 
-return {
-	actions_finder = actions_finder,
-}
+return _M

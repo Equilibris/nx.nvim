@@ -1,7 +1,13 @@
 _G.nx = {
 	workspace = nil,
 	nx = nil,
+	package_json = nil,
 	projects = {},
+
+	generators = {
+		workspace = {},
+		external = {},
+	},
 
 	cache = { actions = {}, targets = {} },
 
