@@ -54,11 +54,17 @@ local multirun_schema = vim.json.decode [[
 }
 ]]
 
+---Prompts user input for generic multirunner
+---
+---@param cmd string
+---@param selection string
+---@param title string | nil
 _M.multirun_with_target = function(cmd, selection, title)
 	title = title or ''
 
 	local config = utils.deepcopy(multirun_schema)
 
+	---@type string[]
 	local configs = utils.keys(_G.nx.cache.targets[selection])
 	if #configs > 0 then
 		config.properties.configuration = {
@@ -96,6 +102,11 @@ _M.multirun_with_target = function(cmd, selection, title)
 	)
 end
 
+---Factory for multirunners
+---
+---@param title string
+---@param cmd string
+---@return function
 local multi_builder = function(title, cmd)
 	return function(opts)
 		opts = opts or {}
@@ -118,7 +129,9 @@ local multi_builder = function(title, cmd)
 	end
 end
 
+---@type function
 _M.run_many = multi_builder('Run many', 'run-many')
+---@type function
 _M.affected = multi_builder('Run many', 'affected')
 
 return _M

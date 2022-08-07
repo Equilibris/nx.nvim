@@ -1,0 +1,189 @@
+================================================================================
+INTRODUCTION                                                           *nx.nvim*
+
+nx.nvim is an extension designed for people wishing for something like vscodes's
+`nx console` but without vscode. Most features from the console are implemented
+here along with some more niche features designed for customisability.
+
+nx.setup({opts})                                                      *nx.setup*
+    Setup function to be run by the user; loads globals and preferences.
+
+    Usage:
+    >
+    require('nx.nvim').setup{
+        -- Base command to run all other nx commands, some other values may be:
+        -- - `npm nx`
+        -- - `yarn nx`
+        -- - `pnpm nx`
+        nx_cmd_root = 'nx',
+
+        -- Command running capabilities,
+        -- see nx.m.command-runners for more details
+        command_runner = require('nx.command-runners').terminal_command_runner(),
+        -- Form rendering capabilities,
+        -- see nx.m.form-renderers for more detials
+        form_renderer = require('nx.form-renderers').telescope_form_renderer(),
+
+        -- Whether or not to load nx configuration,
+        -- see nx.loading-and-reloading for more details
+        read_init = true,
+    }
+<
+
+================================================================================
+MODULES                                                             *nx.modules*
+
+require('nx')                                                             *nx.m*
+    Provides required setup functions
+
+require('nx').setup({opts})                                         *nx.m.setup*
+    Sets up and configures nx.nvim
+
+    {opts}'s values can be found in nx.setup
+
+require('nx.actions')                                             *nx.m.actions*
+    Provides finders and helper functions to run nx actions.
+
+require('nx.actions').run_action(action)               *nx.m.actions.run_action*
+    Helper function taking an nx action string with the form 
+    `[project:]action[:configuration]` like you are used to from the terminal.
+
+    This is run in with the set command_runner, see *nx.m.command-runners*
+
+
+require('nx.actions').actions_finder({opts})       *nx.m.actions.actions_finder*
+    A telescope finder with the given options opts. This finds an action from
+    a list and then passes it to run_action.
+
+    {opts} is a telescope options object
+
+require('nx.multirunners')                                   *nx.m.multirunners*
+    Provides finders and helper functions to run nx targets.
+
+require('nx.multirunners').multirun_with_target(c,s,[t])*nx.m.multirunners.mrwt*
+    Prompt user for multi-command c with selected target s and optionally title
+    t.
+
+    All inputs are strings.
+
+require('nx.multirunners').run_many({opts})         *nx.m.multirunners.run_many*
+    Prompts the user for run_many execution. Calls multirun_with_target under
+    the hood. See *nx.m.multirun_with_target.mrwt*.
+
+    {opts} is a telescope options object
+
+require('nx.multirunners').affected({opts})         *nx.m.multirunners.affected*
+    Prompts the user for affected execution. Calls multirun_with_target under
+    the hood. See *nx.m.multirun_with_target.mrwt*.
+
+    {opts} is a telescope options object
+
+require('nx.generators')                                       *nx.m.generators*
+    A collection of finders and runners for generators.
+
+require('nx.generators').run_generator({gen})    *nx.m.generators.run_generator*
+    Prompt user to run a given generator {gen}.
+
+    {gen} is on the form
+    >
+    {
+        schema: table,
+        run_cmd: string,
+    }
+<
+    These can be found by searching through the global object
+    `_G.nx.generators.workspace` for workspace generators or
+    `_G.nx.generators.external` for external generators.
+
+require('nx.generators').workspace_generators({opts})       *nx.m.generators.wg*
+    Prompts the user to run a workspace generator.
+
+    {opts} is a telescope options object
+
+require('nx.generators').external_generators({opts})        *nx.m.generators.eg*
+    Prompts the user to run an external generator.
+
+    {opts} is a telescope options object
+
+require('nx.generators').generators({opts})         *nx.m.generators.generators*
+    Prompt the user to run any generator.
+
+    {opts} is a telescope options object
+
+require('nx.form-renderers')                               *nx.m.form-renderers*
+    A collection of factories to build tables based upon a given JSON
+    schema.
+
+require('nx.form-renderers').telescope({opts})   *nx.m.form-renderers.telescope*
+    Telescope form renderer.
+
+    {opts} is a telescope options object
+
+require('nx.form-renderers').jsonc()                 *nx.m.form-renderers.jsonc*
+    Yet to be implemented JSONc form renderer.
+
+require('nx.on-project-mod')()                             *nx.m.on-project-mod*
+    Reload actions and targets on project modification.
+
+require('nx.read-configs')                                   *nx.m.read-configs*
+    Functions to reload project configurations. These are used if one has for 
+    example added some generators; projects; targets / actions; or other NX
+    related items. You can either granularity update configs or you can update
+    the entire configuration.
+
+
+require('nx.read-configs').read_nx_root()       *nx.m.read-configs.read_nx_root*
+    Reloads the entire config. This internally calls all the other functions
+    in this module but with some extra checks to avoid unnecessary work.
+
+    Does not call *nx.m.on-project-mod*.
+
+require('nx.read-configs').read_external_generators()    *nx.m.read-configs.reg*
+    Scans package.json (does not scan any other node dependencies) and then
+    reads their associate configs.
+
+require('nx.read-configs').read_workspace_generators()   *nx.m.read-configs.rwg*
+    Scans dir `tools/generators` for generators and reloads them.
+
+require('nx.read-configs').read_nx()                     *nx.m.read-configs.rnx*
+require('nx.read-configs').read_workspace()              *nx.m.read-configs.rws*
+require('nx.read-configs').read_package_json()           *nx.m.read-configs.rpj*
+    Reads the accompanying JSON file from project root.
+
+require('nx.command-runners')                             *nx.m.command-runners*
+    Command runners to be set in the command_runner option in config.
+
+require('nx.command-runners').terminal_cmd() *nx.m.command-runners.terminal_cmd*
+    Terminal cmd runner factory. In the future, this may accept a config for how
+    the command will be run.
+
+require('nx.command-runners').toggleterm_runner({c})  *nx.m.command-runners.ttr*
+    Yet to be stabilised.
+
+================================================================================
+TELESCOPE                                                         *telescope.nx*
+
+:Telescope nx actions                                     *telescope.nx.actions*
+    Runs `require('nx.actions').actions_finder()`
+    See nx.m.actions.actions_finder for more info
+
+:Telescope nx run_many                                   *telescope.nx.run_many*
+    Runs `require('nx.multirunners').run_many()`
+    See nx.m.multirunners.run_many for more info
+
+:Telescope nx affected                                   *telescope.nx.affected*
+    Runs `require('nx.multirunners').affected()`
+    See nx.m.multirunners.affected for more info
+
+:Telescope nx generators                               *telescope.nx.generators*
+    Runs `require('nx.generators').generators()`
+    See nx.m.generators.generators for more info
+
+:Telescope nx workspace_generators           *telescope.nx.workspace_generators*
+    Runs `require('nx.generators').workspace_generators()`
+    See nx.m.generators.wg for more info
+
+:Telescope nx external_generators             *telescope.nx.external_generators*
+    Runs `require('nx.external_generators').external_generators()`
+    See nx.m.generators.eg for more info
+

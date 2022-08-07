@@ -25,7 +25,7 @@ local toggleterm_runner = function(config)
 	end
 end
 
-local terminal_command_runner = function()
+local terminal_cmd = function()
 	return function(command)
 		vim.cmd('terminal ' .. command)
 	end
@@ -33,5 +33,5 @@ end
 
 return {
 	toggleterm_runner = toggleterm_runner,
-	terminal_command_runner = terminal_command_runner,
+	terminal_cmd = terminal_cmd,
 }
