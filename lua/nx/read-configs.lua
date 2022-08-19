@@ -102,7 +102,7 @@ _M.read_external_generators = function()
 						table.insert(gens, {
 							schema = schema,
 							name = name,
-							run_cmd = 'generator ' .. value .. ':' .. name,
+							run_cmd = 'generate ' .. value .. ':' .. name,
 							package = value,
 						})
 					end
