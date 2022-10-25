@@ -42,19 +42,19 @@ local readers = require 'nx.read-configs'
 local setup = function(config)
 	config = config or {}
 
-	if config.nx_cmd_root ~= nil then
+	if config.nx_cmd_root then
 		_G.nx.nx_cmd_root = config.nx_cmd_root
 	else
 		_G.nx.nx_cmd_root = default_config.nx_cmd_root
 	end
 
-	if config.command_runner ~= nil then
+	if config.command_runner then
 		_G.nx.command_runner = config.command_runner
 	else
 		_G.nx.command_runner = default_config.command_runner
 	end
 
-	if config.form_renderer ~= nil then
+	if config.form_renderer then
 		_G.nx.form_renderer = config.form_renderer
 	else
 		_G.nx.form_renderer = default_config.form_renderer

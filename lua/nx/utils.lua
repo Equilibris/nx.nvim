@@ -27,6 +27,10 @@ end
 _M.keys = function(orig)
 	local out = {}
 
+	if not orig then
+		return {}
+	end
+
 	for key, _ in pairs(orig) do
 		table.insert(out, key)
 	end
