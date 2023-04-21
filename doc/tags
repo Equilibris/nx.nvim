@@ -3,7 +3,6 @@ nx.m.actions	nx.txt	/*nx.m.actions*
 nx.m.actions.actions_finder	nx.txt	/*nx.m.actions.actions_finder*
 nx.m.actions.run_action	nx.txt	/*nx.m.actions.run_action*
 nx.m.command-runners	nx.txt	/*nx.m.command-runners*
-nx.m.command-runners	nx.txt	/*nx.m.command-runners*
 nx.m.command-runners.terminal_cmd	nx.txt	/*nx.m.command-runners.terminal_cmd*
 nx.m.command-runners.ttr	nx.txt	/*nx.m.command-runners.ttr*
 nx.m.form-renderers	nx.txt	/*nx.m.form-renderers*
