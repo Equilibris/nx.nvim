@@ -1,3 +1,5 @@
+*nx.txt*	                                                 simple nx utilities
+
 ================================================================================
 INTRODUCTION                                                           *nx.nvim*
 
@@ -48,7 +50,7 @@ require('nx.actions').run_action(action)               *nx.m.actions.run_action*
     Helper function taking an nx action string with the form 
     `[project:]action[:configuration]` like you are used to from the terminal.
 
-    This is run in with the set command_runner, see *nx.m.command-runners*
+    This is run in with the set command_runner, see |nx.m.command-runners|
 
 
 require('nx.actions').actions_finder({opts})       *nx.m.actions.actions_finder*
@@ -60,7 +62,7 @@ require('nx.actions').actions_finder({opts})       *nx.m.actions.actions_finder*
 require('nx.multirunners')                                   *nx.m.multirunners*
     Provides finders and helper functions to run nx targets.
 
-require('nx.multirunners').multirun_with_target(c,s,[t])*nx.m.multirunners.mrwt*
+require('nx.multirunners').multirun_with_target(c,s,[t]) *nx.m.multirunners.mrwt*
     Prompt user for multi-command c with selected target s and optionally title
     t.
 
@@ -68,13 +70,13 @@ require('nx.multirunners').multirun_with_target(c,s,[t])*nx.m.multirunners.mrwt*
 
 require('nx.multirunners').run_many({opts})         *nx.m.multirunners.run_many*
     Prompts the user for run_many execution. Calls multirun_with_target under
-    the hood. See *nx.m.multirun_with_target.mrwt*.
+    the hood. See |nx.m.multirun_with_target.mrwt|.
 
     {opts} is a telescope options object
 
 require('nx.multirunners').affected({opts})         *nx.m.multirunners.affected*
     Prompts the user for affected execution. Calls multirun_with_target under
-    the hood. See *nx.m.multirun_with_target.mrwt*.
+    the hood. See |nx.m.multirun_with_target.mrwt|.
 
     {opts} is a telescope options object
 
@@ -136,7 +138,7 @@ require('nx.read-configs').read_nx_root()       *nx.m.read-configs.read_nx_root*
     Reloads the entire config. This internally calls all the other functions
     in this module but with some extra checks to avoid unnecessary work.
 
-    Does not call *nx.m.on-project-mod*.
+    Does not call |nx.m.on-project-mod|.
 
 require('nx.read-configs').read_external_generators()    *nx.m.read-configs.reg*
     Scans package.json (does not scan any other node dependencies) and then
@@ -187,3 +189,4 @@ TELESCOPE                                                         *telescope.nx*
     Runs `require('nx.external_generators').external_generators()`
     See nx.m.generators.eg for more info
 
+vim:tw=80:ts=4:noet:ft=help:norl:
