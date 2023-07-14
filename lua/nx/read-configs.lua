@@ -1,19 +1,19 @@
+local scandir = require 'plenary.scandir'
 local utils = require 'nx.utils'
 local _M = {}
 
 _M.scandir = function(directory)
-	local t, popen = {}, io.popen
-	local pfile = popen('ls -a "' .. directory .. '"')
-	if pfile == nil then
-		return {}
+	local current_directory = vim.loop.cwd()
+	local files = scandir.scan_dir(current_directory)
+	local file_paths = {}
+
+	for _, file in ipairs(files) do
+		if not file.is_directory then
+			table.insert(file_paths, file.path)
+		end
 	end
 
-	for filename in pfile:lines() do
-		table.insert(t, filename)
-	end
-	pfile:close()
-
-	return t
+	return file_paths
 end
 
 _M.rf = function(fname)
@@ -89,15 +89,13 @@ _M.read_external_generators = function()
 	for _, value in ipairs(deps) do
 		local f = _M.rf('./node_modules/' .. value .. '/package.json')
 		if f ~= nil and f.schematics ~= nil then
-			local schematics = _M.rf(
-				'./node_modules/' .. value .. '/' .. f.schematics
-			)
+			local schematics =
+				_M.rf('./node_modules/' .. value .. '/' .. f.schematics)
 
 			if schematics and schematics.generators then
 				for name, gen in pairs(schematics.generators) do
-					local schema = _M.rf(
-						'./node_modules/' .. value .. '/' .. gen.schema
-					)
+					local schema =
+						_M.rf('./node_modules/' .. value .. '/' .. gen.schema)
 					if schema then
 						table.insert(gens, {
 							schema = schema,

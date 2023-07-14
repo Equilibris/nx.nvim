@@ -17,22 +17,24 @@ end
 ---@param opts table
 _M.actions_finder = function(opts)
 	opts = opts or {}
-	pickers.new(opts, {
-		prompt_title = 'Run Action',
-		finder = finders.new_table {
-			results = _G.nx.cache.actions,
-		},
-		sorter = conf.generic_sorter(opts),
-		attach_mappings = function(prompt_bufnr, map)
-			actions.select_default:replace(function()
-				actions.close(prompt_bufnr)
-				local selection = action_state.get_selected_entry()
-				_M.run_action(selection[1])
-				-- print(vim.inspect(selection))
-			end)
-			return true
-		end,
-	}):find()
+	pickers
+		.new(opts, {
+			prompt_title = 'Run Action',
+			finder = finders.new_table {
+				results = _G.nx.cache.actions,
+			},
+			sorter = conf.generic_sorter(opts),
+			attach_mappings = function(prompt_bufnr, map)
+				actions.select_default:replace(function()
+					actions.close(prompt_bufnr)
+					local selection = action_state.get_selected_entry()
+					_M.run_action(selection[1])
+					-- print(vim.inspect(selection))
+				end)
+				return true
+			end,
+		})
+		:find()
 end
 
 return _M

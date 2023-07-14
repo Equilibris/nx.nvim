@@ -15,6 +15,7 @@ nx.m.generators.run_generator	nx.txt	/*nx.m.generators.run_generator*
 nx.m.generators.wg	nx.txt	/*nx.m.generators.wg*
 nx.m.multirunners	nx.txt	/*nx.m.multirunners*
 nx.m.multirunners.affected	nx.txt	/*nx.m.multirunners.affected*
+nx.m.multirunners.mrwt	nx.txt	/*nx.m.multirunners.mrwt*
 nx.m.multirunners.run_many	nx.txt	/*nx.m.multirunners.run_many*
 nx.m.on-project-mod	nx.txt	/*nx.m.on-project-mod*
 nx.m.read-configs	nx.txt	/*nx.m.read-configs*
@@ -28,6 +29,7 @@ nx.m.setup	nx.txt	/*nx.m.setup*
 nx.modules	nx.txt	/*nx.modules*
 nx.nvim	nx.txt	/*nx.nvim*
 nx.setup	nx.txt	/*nx.setup*
+nx.txt	nx.txt	/*nx.txt*
 telescope.nx	nx.txt	/*telescope.nx*
 telescope.nx.actions	nx.txt	/*telescope.nx.actions*
 telescope.nx.affected	nx.txt	/*telescope.nx.affected*

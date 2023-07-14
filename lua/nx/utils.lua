@@ -57,7 +57,7 @@ _M.dump = function(o, level)
 				.. _M.dump(v, level + 1)
 				.. ',\n'
 		end
-		return s .. indent .. '}'
+		return s .. string.rep('  ', level - 1) .. '}'
 	else
 		return tostring(o)
 	end
