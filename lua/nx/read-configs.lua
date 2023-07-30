@@ -1,6 +1,9 @@
 local scandir = require 'plenary.scandir'
+local a = require 'plenary.async'
+
 local utils = require 'nx.utils'
 local console = (require 'nx.logging')
+
 local _M = {}
 
 function _M.scandir(directory)
@@ -19,19 +22,31 @@ end
 
 function _M.rf(fname)
 	console.log('Reading ' .. fname)
-	local f = io.open(vim.fn.resolve(fname), 'r')
 
-	if f == nil then
-		return nil
+	local err, fd = a.uv.fs_open(fname, 'r', 438)
+	if err then
+		return {}
 	end
 
-	local s = f:read 'a' -- a = all
+	local err, stat = a.uv.fs_fstat(fd)
+	if err then
+		return {}
+	end
 
-	local table = vim.json.decode(s)
+	local err, data = a.uv.fs_read(fd, stat.size, 0)
+	if err then
+		return {}
+	end
+
+	local err = a.uv.fs_close(fd)
+	if err then
+		return {}
+	end
+
+	local table = vim.json.decode(data)
 
 	console.log(table)
 
-	f:close()
 	return table
 end
 

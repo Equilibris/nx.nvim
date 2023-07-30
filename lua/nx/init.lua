@@ -1,4 +1,5 @@
 local log = (require 'nx.logging').log
+local a = require 'plenary.async'
 
 ---@alias Generator { schema: table, name: string, run_cmd: string, package: string}
 ---@alias Generators { workspace: Generator[], external: Generator[] }
@@ -71,9 +72,11 @@ local setup = function(config)
 	log(_G.nx)
 
 	if config.read_init ~= false then
-		readers.read_nx_root()
+		a.run(function()
+			readers.read_nx_root()
 
-		require 'nx.on-project-mod'()
+			-- require 'nx.on-project-mod'()
+		end)
 	end
 end
 
