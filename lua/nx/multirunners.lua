@@ -59,7 +59,7 @@ local multirun_schema = vim.json.decode [[
 ---@param cmd string
 ---@param selection string
 ---@param title string | nil
-_M.multirun_with_target = function(cmd, selection, title)
+function _M.multirun_with_target(cmd, selection, title)
 	title = title or ''
 
 	local config = utils.deepcopy(multirun_schema)
@@ -110,22 +110,25 @@ end
 local multi_builder = function(title, cmd)
 	return function(opts)
 		opts = opts or {}
-		pickers.new(opts, {
-			prompt_title = 'Pick target for ' .. title,
-			finder = finders.new_table {
-				results = utils.keys(_G.nx.cache.targets),
-			},
-			sorter = conf.generic_sorter(opts),
-			attach_mappings = function(prompt_bufnr, map)
-				actions.select_default:replace(function()
-					actions.close(prompt_bufnr)
-					local selection = action_state.get_selected_entry().value
+		pickers
+			.new(opts, {
+				prompt_title = 'Pick target for ' .. title,
+				finder = finders.new_table {
+					results = utils.keys(_G.nx.cache.targets),
+				},
+				sorter = conf.generic_sorter(opts),
+				attach_mappings = function(prompt_bufnr, map)
+					actions.select_default:replace(function()
+						actions.close(prompt_bufnr)
+						local selection =
+							action_state.get_selected_entry().value
 
-					_M.multirun_with_target(cmd, selection, title)
-				end)
-				return true
-			end,
-		}):find()
+						_M.multirun_with_target(cmd, selection, title)
+					end)
+					return true
+				end,
+			})
+			:find()
 	end
 end
 

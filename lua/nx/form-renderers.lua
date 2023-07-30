@@ -11,6 +11,7 @@ local pickers = require 'telescope.pickers'
 local finders = require 'telescope.finders'
 local conf = require('telescope.config').values
 local utils = require 'nx.utils'
+local console = require 'nx.logging'
 
 local actions = require 'telescope.actions'
 local action_state = require 'telescope.actions.state'
@@ -53,7 +54,7 @@ end
 ---Construct and bootstrap a form-renderer using telescope
 ---@param opts table | nil
 ---@return form_renderer
-_M.telescope = function(opts)
+function _M.telescope(opts)
 	---@type form_renderer
 	local renderer
 
@@ -138,9 +139,9 @@ _M.telescope = function(opts)
 				attach_mappings = function(prompt_bufnr, map)
 					actions.select_default:replace(function()
 						local selection = is_multi
-								and action_state.get_current_picker(
-									prompt_bufnr
-								):get_multi_selection()
+								and action_state
+									.get_current_picker(prompt_bufnr)
+									:get_multi_selection()
 							or action_state.get_selected_entry().value
 
 						actions.close(prompt_bufnr)
@@ -194,6 +195,13 @@ _M.telescope = function(opts)
 
 	renderer = function(form, title, callback, state)
 		title = title or form['$id']
+
+		console.log('Executing form renderer for form ' .. title)
+		console.log 'Initial State:'
+		console.log(state)
+
+		console.log 'Form config:'
+		console.log(form)
 
 		local type = form.type
 

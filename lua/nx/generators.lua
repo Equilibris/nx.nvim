@@ -1,6 +1,6 @@
 local _M = {}
 
-local utils = require 'nx.utils'
+local console = require 'nx.logging'
 
 local pickers = require 'telescope.pickers'
 local finders = require 'telescope.finders'
@@ -25,6 +25,25 @@ end
 ---Run a given generator
 ---@param generator Generator
 _M.run_generator = function(generator)
+	console.log 'Executing generator'
+	console.log(generator)
+
+	local initial_config = {}
+	local accessor = generator.package .. ':' .. generator.name
+
+	if _G.nx.nx.generators[accessor] ~= nil then
+		initial_config = _G.nx.nx.generators[accessor]
+	end
+	if
+		_G.nx.nx.generators[generator.package] ~= nil
+		and _G.nx.nx.generators[generator.package][generator.name] ~= nil
+	then
+		initial_config = _G.nx.nx.generators[generator.package][generator.name]
+	end
+
+	console.log('Loading initial_config for ' .. accessor)
+	console.log(initial_config)
+
 	_G.nx.form_renderer(generator.schema, nil, function(form_result)
 		local s = _G.nx.nx_cmd_root .. ' ' .. generator.run_cmd
 
@@ -47,23 +66,26 @@ local generator_builder = function(source)
 	return function(opts)
 		opts = opts or {}
 
-		pickers.new(opts, {
-			prompt_title = 'Generators',
-			finder = finders.new_table {
-				results = source(),
-				entry_maker = make_entry,
-			},
-			sorter = conf.generic_sorter(opts),
-			attach_mappings = function(prompt_bufnr, map)
-				actions.select_default:replace(function()
-					actions.close(prompt_bufnr)
-					local selection = action_state.get_selected_entry().value
+		pickers
+			.new(opts, {
+				prompt_title = 'Generators',
+				finder = finders.new_table {
+					results = source(),
+					entry_maker = make_entry,
+				},
+				sorter = conf.generic_sorter(opts),
+				attach_mappings = function(prompt_bufnr, map)
+					actions.select_default:replace(function()
+						actions.close(prompt_bufnr)
+						local selection =
+							action_state.get_selected_entry().value
 
-					_M.run_generator(selection)
-				end)
-				return true
-			end,
-		}):find()
+						_M.run_generator(selection)
+					end)
+					return true
+				end,
+			})
+			:find()
 	end
 end
 

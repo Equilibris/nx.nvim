@@ -1,14 +1,4 @@
----@alias form_renderer fun(form: table, title: string | nil, callback: function, state: table)
----@class Config
----@field public nx_cmd_root string
----@field public command_runner function
----@field public form_renderer function
----@field public read_init boolean
-local default_config = {
-	nx_cmd_root = 'nx',
-	command_runner = require('nx.command-runners').terminal_cmd(),
-	form_renderer = require('nx.form-renderers').telescope(),
-}
+local log = (require 'nx.logging').log
 
 ---@alias Generator { schema: table, name: string, run_cmd: string, package: string}
 ---@alias Generators { workspace: Generator[], external: Generator[] }
@@ -22,6 +12,8 @@ local default_config = {
 ---@field public generators Generators
 ---@field public cache Cache
 _G.nx = {
+	log = '',
+
 	workspace = nil,
 	nx = nil,
 	package_json = nil,
@@ -35,11 +27,27 @@ _G.nx = {
 	cache = { actions = {}, targets = {} },
 }
 
+---@alias form_renderer fun(form: table, title: string | nil, callback: function, state: table)
+---@class Config
+---@field public nx_cmd_root string
+---@field public command_runner function
+---@field public form_renderer function
+---@field public read_init boolean
+local default_config = {
+	nx_cmd_root = 'nx',
+	command_runner = require('nx.command-runners').terminal_cmd(),
+	form_renderer = require('nx.form-renderers').telescope(),
+}
+
 local readers = require 'nx.read-configs'
 
 --- Setup NX and set its defaults
 --- @param config table
 local setup = function(config)
+	log '==================================='
+	log '========== Setting up NX =========='
+	log '==================================='
+
 	config = config or {}
 
 	if config.nx_cmd_root then
@@ -60,7 +68,9 @@ local setup = function(config)
 		_G.nx.form_renderer = default_config.form_renderer
 	end
 
-	if config.read_init or true then
+	log(_G.nx)
+
+	if config.read_init ~= false then
 		readers.read_nx_root()
 
 		require 'nx.on-project-mod'()

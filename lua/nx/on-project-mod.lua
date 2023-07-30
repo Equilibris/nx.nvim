@@ -1,5 +1,10 @@
+local log = (require 'nx.logging').log
+--
 ---Reloads actions and targets config
 local on_project_mod = function()
+	log 'On Project Mod'
+	log '--------------'
+
 	local actions = {}
 	local targets = {}
 
@@ -21,6 +26,10 @@ local on_project_mod = function()
 
 	_G.nx.cache.actions = actions
 	_G.nx.cache.targets = targets
+
+	log(_G.nx.cache)
+
+	log '--------------'
 end
 
 return on_project_mod

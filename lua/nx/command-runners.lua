@@ -1,4 +1,8 @@
-local toggleterm_runner = function(config)
+local console = require 'nx.logging'
+
+local _M = {}
+
+function _M.toggleterm_runner(config)
 	config = config
 		or {
 			direction = 'float',
@@ -25,13 +29,13 @@ local toggleterm_runner = function(config)
 	end
 end
 
-local terminal_cmd = function()
+function _M.terminal_cmd()
 	return function(command)
+		console.log 'Running command:'
+		console.log(command)
+
 		vim.cmd('terminal ' .. command)
 	end
 end
 
-return {
-	toggleterm_runner = toggleterm_runner,
-	terminal_cmd = terminal_cmd,
-}
+return _M

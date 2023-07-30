@@ -1,8 +1,9 @@
 local scandir = require 'plenary.scandir'
 local utils = require 'nx.utils'
+local console = (require 'nx.logging')
 local _M = {}
 
-_M.scandir = function(directory)
+function _M.scandir(directory)
 	local current_directory = vim.loop.cwd()
 	local files = scandir.scan_dir(current_directory)
 	local file_paths = {}
@@ -16,7 +17,8 @@ _M.scandir = function(directory)
 	return file_paths
 end
 
-_M.rf = function(fname)
+function _M.rf(fname)
+	console.log('Reading ' .. fname)
 	local f = io.open(vim.fn.resolve(fname), 'r')
 
 	if f == nil then
@@ -27,27 +29,30 @@ _M.rf = function(fname)
 
 	local table = vim.json.decode(s)
 
+	console.log(table)
+
 	f:close()
 	return table
 end
 
 ---Reads nx.json and sets its global var
-_M.read_nx = function()
+function _M.read_nx()
 	_G.nx.nx = _M.rf './nx.json'
 end
 
 ---Reads workspace.json and sets its global var
-_M.read_workspace = function()
+function _M.read_workspace()
 	_G.nx.workspace = _M.rf './workspace.json'
 end
 
 ---Reads package.json and sets its global var
-_M.read_package_json = function()
+function _M.read_package_json()
 	_G.nx.package_json = _M.rf './package.json'
 end
 
 ---Reads all projects configurations
-_M.read_projects = function()
+function _M.read_projects()
+	console.log 'Reading individual projects'
 	for key, value in pairs(_G.nx.workspace.projects or {}) do
 		local v = _M.rf(value .. '/project.json')
 
@@ -56,9 +61,10 @@ _M.read_projects = function()
 end
 
 ---Reads workspace generators
-_M.read_workspace_generators = function()
+function _M.read_workspace_generators()
 	local gens = {}
 
+	console.log 'Reading workspace generators'
 	for _, value in ipairs(_M.scandir './tools/generators') do
 		local schema = _M.rf('./tools/generators/' .. value .. '/schema.json')
 		if schema then
@@ -75,7 +81,7 @@ _M.read_workspace_generators = function()
 end
 
 ---Reads node_modules generators (only those specified in package.json, not lock)
-_M.read_external_generators = function()
+function _M.read_external_generators()
 	local deps = {}
 	for _, value in ipairs(utils.keys(_G.nx.package_json.dependencies)) do
 		table.insert(deps, value)
@@ -113,8 +119,18 @@ _M.read_external_generators = function()
 end
 
 ---Reads all configs
-_M.read_nx_root = function()
+function _M.read_nx_root()
+	console.log 'Starting reading'
+	console.log '----------------'
+
 	_M.read_nx()
+
+	if _G.nx.nx == nil or _G.nx.nx['$schema'] == nil then
+		console.error 'Nx config was not found'
+		console.log '----------------'
+		return
+	end
+
 	_M.read_workspace()
 	_M.read_package_json()
 
@@ -126,6 +142,7 @@ _M.read_nx_root = function()
 	if _G.nx.package_json ~= nil then
 		_M.read_external_generators()
 	end
+	console.log '----------------'
 end
 
 return _M
