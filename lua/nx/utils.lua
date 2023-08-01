@@ -67,4 +67,21 @@ _M.pd = function(o)
 	print(_M.dump(o))
 end
 
+function _M.split_on_space(str)
+	words = {}
+
+	for word in str:gmatch '%w+' do
+		table.insert(words, word)
+	end
+
+	return words
+end
+
+function _M.concat(lsa, lsb)
+	for _, item in ipairs(lsb) do
+		table.insert(lsa, item)
+	end
+	return lsa
+end
+
 return _M

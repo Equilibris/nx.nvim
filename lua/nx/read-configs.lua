@@ -1,102 +1,235 @@
 local scandir = require 'plenary.scandir'
-local a = require 'plenary.async'
-
+local Job = require 'plenary.job'
 local utils = require 'nx.utils'
 local console = (require 'nx.logging')
 
 local _M = {}
 
-function _M.scandir(directory)
+function _M.scandir(directory, callback)
 	local current_directory = vim.loop.cwd()
-	local files = scandir.scan_dir(current_directory)
-	local file_paths = {}
 
-	for _, file in ipairs(files) do
-		if not file.is_directory then
-			table.insert(file_paths, file.path)
-		end
+	console.log('Scanning ' .. directory)
+
+	local stat = vim.loop.fs_stat(directory)
+
+	if not stat or not stat.type == 'directory' then
+		console.log('Scanned ' .. directory)
+		callback {}
 	end
 
-	return file_paths
+	scandir.scan_dir(current_directory, {
+		on_exit = function(files)
+			console.log('Scanned ' .. directory)
+			local file_paths = {}
+
+			for _, file in ipairs(files) do
+				if not file.is_directory then
+					table.insert(file_paths, file.path)
+				end
+			end
+
+			callback(file_paths)
+		end,
+	})
 end
 
-function _M.rf(fname)
+function _M.rf(fname, callback)
 	console.log('Reading ' .. fname)
 
-	local err, fd = a.uv.fs_open(fname, 'r', 438)
-	if err then
-		return {}
-	end
+	vim.loop.fs_open(fname, 'r', 438, function(_, fd)
+		if not fd then
+			callback {}
+			return
+		end
 
-	local err, stat = a.uv.fs_fstat(fd)
-	if err then
-		return {}
-	end
+		vim.loop.fs_fstat(fd, function(_, stat)
+			if not stat then
+				vim.loop.fs_close(fd)
+				callback {}
+				return
+			end
 
-	local err, data = a.uv.fs_read(fd, stat.size, 0)
-	if err then
-		return {}
-	end
+			vim.loop.fs_read(fd, stat.size, 0, function(_, data)
+				if not data then
+					vim.loop.fs_close(fd)
+					callback {}
+					return
+				end
 
-	local err = a.uv.fs_close(fd)
-	if err then
-		return {}
-	end
-
-	local table = vim.json.decode(data)
-
-	console.log(table)
-
-	return table
+				vim.loop.fs_close(fd, function()
+					local table = vim.json.decode(data)
+					callback(table)
+				end)
+			end)
+		end)
+	end)
 end
 
----Reads nx.json and sets its global var
-function _M.read_nx()
-	_G.nx.nx = _M.rf './nx.json'
+function _M.read_nx(callback)
+	_M.rf('./nx.json', function(data)
+		_G.nx.nx = data
+		callback()
+	end)
 end
 
----Reads workspace.json and sets its global var
-function _M.read_workspace()
-	_G.nx.workspace = _M.rf './workspace.json'
+function _M.read_package_json(callback)
+	_M.rf('./package.json', function(data)
+		_G.nx.package_json = data
+		callback()
+	end)
 end
 
----Reads package.json and sets its global var
-function _M.read_package_json()
-	_G.nx.package_json = _M.rf './package.json'
-end
-
----Reads all projects configurations
-function _M.read_projects()
+function _M.read_projects(callback)
 	console.log 'Reading individual projects'
-	for key, value in pairs(_G.nx.workspace.projects or {}) do
-		local v = _M.rf(value .. '/project.json')
+	local projects = _G.nx.graph.nodes or {}
+	local keys = utils.keys(projects)
+	local count = #keys
+	local loadedCount = 0
 
-		_G.nx.projects[key] = v
+	for key, value in pairs(projects) do
+		_M.rf(value .. '/project.json', function(v)
+			_G.nx.projects[key] = v
+			loadedCount = loadedCount + 1
+			if loadedCount == count then
+				callback()
+			end
+		end)
+	end
+
+	-- If the projects table is empty, call the callback directly
+	if count == 0 then
+		callback()
 	end
 end
 
----Reads workspace generators
-function _M.read_workspace_generators()
+function _M.read_workspace_generators(callback)
 	local gens = {}
 
 	console.log 'Reading workspace generators'
-	for _, value in ipairs(_M.scandir './tools/generators') do
-		local schema = _M.rf('./tools/generators/' .. value .. '/schema.json')
-		if schema then
-			table.insert(gens, {
-				schema = schema,
-				name = value,
-				run_cmd = 'workspace-generator ' .. value,
-				package = 'workspace-generator',
-			})
-		end
-	end
+	_M.scandir('./tools/generators', function(files)
+		local count = #files
+		local loadedCount = 0
 
-	_G.nx.generators.workspace = gens
+		for _, value in ipairs(files) do
+			_M.rf(
+				'./tools/generators/' .. value .. '/schema.json',
+				function(schema)
+					if schema then
+						table.insert(gens, {
+							schema = schema,
+							name = value,
+							run_cmd = 'workspace-generator ' .. value,
+							package = 'workspace-generator',
+						})
+					end
+
+					loadedCount = loadedCount + 1
+					console.log('Adding generator ' .. value)
+					if loadedCount == count then
+						_G.nx.generators.workspace = gens
+						callback()
+					end
+				end
+			)
+		end
+
+		-- If the files table is empty, call the callback directly
+		if count == 0 then
+			_G.nx.generators.workspace = gens
+			callback()
+		end
+	end)
+end
+---Reads workspace generators
+function _M.read_workspace_generators(callback)
+	local gens = {}
+
+	console.log 'Reading workspace generators'
+	_M.scandir('./tools/generators', function(files)
+		local count = #files
+		local loadedCount = 0
+
+		local function check_all_completed()
+			if loadedCount == count then
+				_G.nx.generators.workspace = gens
+				callback()
+			end
+		end
+
+		for _, file in ipairs(files) do
+			_M.rf(
+				'./tools/generators/' .. file .. '/schema.json',
+				function(schema)
+					if schema then
+						table.insert(gens, {
+							schema = schema,
+							name = file,
+							run_cmd = 'workspace-generator ' .. file,
+							package = 'workspace-generator',
+						})
+					end
+
+					loadedCount = loadedCount + 1
+					check_all_completed()
+				end
+			)
+		end
+
+		-- If the files table is empty, call the callback directly
+		if count == 0 then
+			_G.nx.generators.workspace = gens
+			callback()
+		end
+	end)
 end
 
+function _M.read_project_graph(callback)
+	console.log 'Reading project graph'
+	console.log '---------------------'
+
+	local temp_file = _G.nx.graph_file_name
+
+	local ls = utils.concat(
+		utils.split_on_space(_G.nx.nx_cmd_root),
+		{ 'graph', '--file=' .. temp_file }
+	)
+
+	local args = {}
+
+	for i = 2, #ls do
+		table.insert(args, ls[i])
+	end
+
+	local s = 'Running'
+	for i = 1, #ls do
+		s = s .. ' ' .. ls[i]
+	end
+	console.log(s)
+
+	local job = Job:new {
+		command = ls[1],
+		args = args,
+		capture_output = true,
+		on_exit = function(j, return_val)
+			assert(return_val, 0)
+
+			_G.nx.graph = _M.rf(temp_file, function(data)
+				_G.nx.graph = data
+
+				console.log(_G.nx.graph)
+				console.log '---------------------'
+
+				callback()
+			end)
+		end,
+	}
+
+	job:start()
+end
+
+--
 ---Reads node_modules generators (only those specified in package.json, not lock)
-function _M.read_external_generators()
+function _M.read_external_generators(callback)
 	local deps = {}
 	for _, value in ipairs(utils.keys(_G.nx.package_json.dependencies)) do
 		table.insert(deps, value)
@@ -106,58 +239,120 @@ function _M.read_external_generators()
 	end
 
 	local gens = {}
+	local count = #deps
+	local loadedCount = 0
 
 	for _, value in ipairs(deps) do
-		local f = _M.rf('./node_modules/' .. value .. '/package.json')
-		if f ~= nil and f.schematics ~= nil then
-			local schematics =
-				_M.rf('./node_modules/' .. value .. '/' .. f.schematics)
+		_M.rf('./node_modules/' .. value .. '/package.json', function(f)
+			if f ~= nil and f.schematics ~= nil then
+				_M.rf(
+					'./node_modules/' .. value .. '/' .. f.schematics,
+					function(schematics)
+						if schematics and schematics.generators then
+							local genCount = 0
+							local loadedGenCount = 0
 
-			if schematics and schematics.generators then
-				for name, gen in pairs(schematics.generators) do
-					local schema =
-						_M.rf('./node_modules/' .. value .. '/' .. gen.schema)
-					if schema then
-						table.insert(gens, {
-							schema = schema,
-							name = name,
-							run_cmd = 'generate ' .. value .. ':' .. name,
-							package = value,
-						})
+							for name, gen in pairs(schematics.generators) do
+								_M.rf(
+									'./node_modules/'
+										.. value
+										.. '/'
+										.. gen.schema,
+									function(schema)
+										if schema then
+											table.insert(gens, {
+												schema = schema,
+												name = name,
+												run_cmd = 'generate '
+													.. value
+													.. ':'
+													.. name,
+												package = value,
+											})
+										end
+
+										loadedGenCount = loadedGenCount + 1
+										if loadedGenCount == genCount then
+											loadedCount = loadedCount + 1
+											if loadedCount == count then
+												_G.nx.generators.external = gens
+												callback()
+											end
+										end
+									end
+								)
+
+								genCount = genCount + 1
+							end
+
+							-- If no generators found for this package, update loadedCount directly
+							if genCount == 0 then
+								loadedCount = loadedCount + 1
+								if loadedCount == count then
+									_G.nx.generators.external = gens
+									callback()
+								end
+							end
+						else
+							loadedCount = loadedCount + 1
+							if loadedCount == count then
+								_G.nx.generators.external = gens
+								callback()
+							end
+						end
 					end
+				)
+			else
+				loadedCount = loadedCount + 1
+				if loadedCount == count then
+					_G.nx.generators.external = gens
+					callback()
 				end
 			end
-		end
+		end)
 	end
 
-	_G.nx.generators.external = gens
+	-- If the dependencies table is empty, call the callback directly
+	if count == 0 then
+		_G.nx.generators.external = gens
+		callback()
+	end
 end
 
----Reads all configs
-function _M.read_nx_root()
+function _M.read_nx_root(callback)
 	console.log 'Starting reading'
 	console.log '----------------'
 
-	_M.read_nx()
+	local function handle_nx_completed()
+		if _G.nx.nx == nil or _G.nx.nx['$schema'] == nil then
+			console.error 'Nx config was not found'
+			console.log '----------------'
+			return
+		end
 
-	if _G.nx.nx == nil or _G.nx.nx['$schema'] == nil then
-		console.error 'Nx config was not found'
-		console.log '----------------'
-		return
+		_M.read_project_graph(function()
+			console.log 'Read project graph completed.'
+			_M.read_package_json(function()
+				console.log 'Read package.json completed.'
+				_M.read_projects(function()
+					console.log 'Read projects completed.'
+					_M.read_workspace_generators(function()
+						console.log 'Read workspace generators completed.'
+						_M.read_external_generators(function()
+							console.log 'Read external generators completed.'
+							console.log '----------------'
+							callback()
+						end)
+					end)
+				end)
+			end)
+		end)
 	end
 
-	_M.read_workspace()
-	_M.read_package_json()
-
-	if _G.nx.workspace ~= nil then
-		_M.read_projects()
-	end
-
-	_M.read_workspace_generators()
-	if _G.nx.package_json ~= nil then
-		_M.read_external_generators()
-	end
-	console.log '----------------'
+	_M.read_nx(function()
+		console.log 'Read nx.json completed.'
+		handle_nx_completed()
+	end)
 end
 
 return _M

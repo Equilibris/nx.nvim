@@ -1,23 +1,35 @@
-local log = (require 'nx.logging').log
+local console = require 'nx.logging'
 --
 ---Reloads actions and targets config
-local on_project_mod = function()
-	log 'On Project Mod'
-	log '--------------'
+local function on_project_mod()
+	console.log 'On Project Mod'
+	console.log '--------------'
 
 	local actions = {}
 	local targets = {}
 
-	for key, proj in pairs(_G.nx.projects) do
+	for key, node in pairs(_G.nx.graph.graph.nodes or {}) do
+		local proj = node.data
+		console.log('Handeling node ' .. key .. ' with:')
+		console.log(proj)
+
 		for name, target in pairs(proj.targets or {}) do
 			if targets[name] == nil then
 				targets[name] = {}
 			end
 
-			table.insert(actions, key .. ':' .. name)
+			local target_name = key .. ':' .. name
+
+			console.log('Inserting ' .. target_name)
+
+			table.insert(actions, target_name)
 
 			for config, _ in pairs(target.configurations or {}) do
-				table.insert(actions, key .. ':' .. name .. ':' .. config)
+				local config_name = target_name .. ':' .. config
+
+				console.log('Inserting ' .. config_name)
+
+				table.insert(actions, config_name)
 
 				targets[name][config] = true
 			end
@@ -27,9 +39,9 @@ local on_project_mod = function()
 	_G.nx.cache.actions = actions
 	_G.nx.cache.targets = targets
 
-	log(_G.nx.cache)
+	console.log(_G.nx.cache)
 
-	log '--------------'
+	console.log '--------------'
 end
 
 return on_project_mod

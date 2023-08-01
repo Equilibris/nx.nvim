@@ -8,6 +8,7 @@ local a = require 'plenary.async'
 ---@class NxGlobal : Config
 ---@field public nx table
 ---@field public workspace table
+---@field public graph table
 ---@field public package_json table
 ---@field public projects table
 ---@field public generators Generators
@@ -15,7 +16,9 @@ local a = require 'plenary.async'
 _G.nx = {
 	log = '',
 
-	workspace = nil,
+	graph_file_name = vim.fn.tempname() .. '.json',
+
+	graph = nil,
 	nx = nil,
 	package_json = nil,
 	projects = {},
@@ -72,11 +75,7 @@ local setup = function(config)
 	log(_G.nx)
 
 	if config.read_init ~= false then
-		a.run(function()
-			readers.read_nx_root()
-
-			-- require 'nx.on-project-mod'()
-		end)
+		readers.read_nx_root(require 'nx.on-project-mod')
 	end
 end
 
