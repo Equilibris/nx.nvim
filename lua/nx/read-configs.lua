@@ -227,7 +227,6 @@ function _M.read_project_graph(callback)
 	job:start()
 end
 
---
 ---Reads node_modules generators (only those specified in package.json, not lock)
 function _M.read_external_generators(callback)
 	local deps = {}
