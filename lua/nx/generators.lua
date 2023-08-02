@@ -54,7 +54,7 @@ _M.run_generator = function(generator)
 		end
 
 		_G.nx.command_runner(s)
-	end, {})
+	end, initial_config)
 end
 ---Constructs a generator builder with a source generator
 ---
