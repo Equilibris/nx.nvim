@@ -194,7 +194,7 @@ function _M.telescope(opts)
 	end
 
 	renderer = function(form, title, callback, state)
-		title = title or form['$id']
+		title = title or form['$id'] or 'MISSING TITLE'
 
 		console.log('Executing form renderer for form ' .. title)
 		console.log 'Initial State:'
