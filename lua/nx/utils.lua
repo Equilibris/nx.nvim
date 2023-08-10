@@ -84,4 +84,17 @@ function _M.concat(lsa, lsb)
 	return lsa
 end
 
+function _M.merge(tba, tbb)
+	local output = {}
+
+	for key, item in pairs(tba) do
+		table[key] = item
+	end
+	for key, item in pairs(tbb) do
+		table[key] = item
+	end
+
+	return output
+end
+
 return _M

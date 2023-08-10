@@ -241,73 +241,71 @@ function _M.read_external_generators(callback)
 	local count = #deps
 	local loadedCount = 0
 
+	local function maybe_continue()
+		loadedCount = loadedCount + 1
+		if loadedCount == count * 2 then
+			_G.nx.generators.external = gens
+			callback()
+		end
+	end
+
+	local function add_gen(value, name, schema)
+		if schema then
+			table.insert(gens, {
+				schema = schema,
+				name = name,
+				run_cmd = 'generate ' .. value .. ':' .. name,
+				package = value,
+			})
+		end
+	end
+
 	for _, value in ipairs(deps) do
 		_M.rf('./node_modules/' .. value .. '/package.json', function(f)
-			if f ~= nil and f.schematics ~= nil then
-				_M.rf(
-					'./node_modules/' .. value .. '/' .. f.schematics,
-					function(schematics)
-						if schematics and schematics.generators then
-							local genCount = 0
-							local loadedGenCount = 0
+			local function handel_schematic_file(field)
+				if f[field] then
+					_M.rf(
+						'./node_modules/' .. value .. '/' .. f[field],
+						function(schematics)
+							if schematics and schematics.generators then
+								local genCount = 0
+								local loadedGenCount = 0
 
-							for name, gen in pairs(schematics.generators) do
-								_M.rf(
-									'./node_modules/'
-										.. value
-										.. '/'
-										.. gen.schema,
-									function(schema)
-										if schema then
-											table.insert(gens, {
-												schema = schema,
-												name = name,
-												run_cmd = 'generate '
-													.. value
-													.. ':'
-													.. name,
-												package = value,
-											})
-										end
+								for name, gen in pairs(schematics.generators) do
+									genCount = genCount + 1
 
-										loadedGenCount = loadedGenCount + 1
-										if loadedGenCount == genCount then
-											loadedCount = loadedCount + 1
-											if loadedCount == count then
-												_G.nx.generators.external = gens
-												callback()
+									_M.rf(
+										'./node_modules/'
+											.. value
+											.. '/'
+											.. gen.schema,
+										function(schema)
+											add_gen(value, name, schema)
+
+											loadedGenCount = loadedGenCount + 1
+											if loadedGenCount == genCount then
+												maybe_continue()
 											end
 										end
-									end
-								)
-
-								genCount = genCount + 1
-							end
-
-							-- If no generators found for this package, update loadedCount directly
-							if genCount == 0 then
-								loadedCount = loadedCount + 1
-								if loadedCount == count then
-									_G.nx.generators.external = gens
-									callback()
+									)
 								end
-							end
-						else
-							loadedCount = loadedCount + 1
-							if loadedCount == count then
-								_G.nx.generators.external = gens
-								callback()
+
+								-- If no generators found for this package, update loadedCount directly
+								if genCount == 0 then
+									maybe_continue()
+								end
+							else
+								maybe_continue()
 							end
 						end
-					end
-				)
-			else
-				loadedCount = loadedCount + 1
-				if loadedCount == count then
-					_G.nx.generators.external = gens
-					callback()
+					)
+				else
+					maybe_continue()
 				end
 			end
+
+			handel_schematic_file 'schematics'
+			handel_schematic_file 'generators'
 		end)
 	end
 
