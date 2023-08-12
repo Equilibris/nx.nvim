@@ -38,27 +38,27 @@ function _M.rf(fname, callback)
 
 	vim.loop.fs_open(fname, 'r', 438, function(_, fd)
 		if not fd then
-			callback {}
+			callback({}, false)
 			return
 		end
 
 		vim.loop.fs_fstat(fd, function(_, stat)
 			if not stat then
 				vim.loop.fs_close(fd)
-				callback {}
+				callback({}, false)
 				return
 			end
 
 			vim.loop.fs_read(fd, stat.size, 0, function(_, data)
 				if not data then
 					vim.loop.fs_close(fd)
-					callback {}
+					callback({}, false)
 					return
 				end
 
 				vim.loop.fs_close(fd, function()
 					local table = vim.json.decode(data)
-					callback(table)
+					callback(table, true)
 				end)
 			end)
 		end)
@@ -66,9 +66,9 @@ function _M.rf(fname, callback)
 end
 
 function _M.read_nx(callback)
-	_M.rf('./nx.json', function(data)
+	_M.rf('./nx.json', function(data, found)
 		_G.nx.nx = data
-		callback()
+		callback(found)
 	end)
 end
 
@@ -321,7 +321,7 @@ function _M.read_nx_root(callback)
 	console.log '----------------'
 
 	local function handle_nx_completed()
-		if _G.nx.nx == nil or _G.nx.nx['$schema'] == nil then
+		if _G.nx.nx == nil then
 			console.error 'Nx config was not found'
 			console.log '----------------'
 			return
@@ -346,9 +346,11 @@ function _M.read_nx_root(callback)
 		end)
 	end
 
-	_M.read_nx(function()
+	_M.read_nx(function(found)
 		console.log 'Read nx.json completed.'
-		handle_nx_completed()
+		if found then
+			handle_nx_completed()
+		end
 	end)
 end
 
