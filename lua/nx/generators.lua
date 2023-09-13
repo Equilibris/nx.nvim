@@ -9,6 +9,8 @@ local conf = require('telescope.config').values
 local actions = require 'telescope.actions'
 local action_state = require 'telescope.actions.state'
 
+local utils = require 'nx.utils'
+
 ---Make generator entry
 ---
 ---@param entry table
@@ -45,7 +47,14 @@ _M.run_generator = function(generator)
 	console.log('Loading initial_config for ' .. accessor)
 	console.log(initial_config)
 
-	_G.nx.form_renderer(generator.schema, accessor, function(form_result)
+	local schema = utils.deepcopy(generator.schema)
+
+	if schema.type == 'object' then
+		console.log 'HERE'
+		schema.properties.dryRun = { type = 'boolean' }
+	end
+
+	_G.nx.form_renderer(schema, accessor, function(form_result)
 		local s = _G.nx.nx_cmd_root .. ' ' .. generator.run_cmd
 
 		for key, value in pairs(form_result) do

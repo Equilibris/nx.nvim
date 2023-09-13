@@ -46,7 +46,7 @@ local get_enum_values_from_form = function(form)
 			form['$default'] ~= nil
 			and form['$default']['$source'] == 'projectName'
 			and _G.nx.graph
-			and utils.keys(_G.nx.projects)
+			and utils.keys(_G.nx.graph.graph.nodes)
 		)
 	return enum_value
 end
