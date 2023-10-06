@@ -140,6 +140,7 @@ function _M.read_workspace_generators(callback)
 		end
 	end)
 end
+
 ---Reads workspace generators
 function _M.read_workspace_generators(callback)
 	local gens = {}
@@ -267,35 +268,38 @@ function _M.read_external_generators(callback)
 					_M.rf(
 						'./node_modules/' .. value .. '/' .. f[field],
 						function(schematics)
-							if schematics and schematics.generators then
-								local genCount = 0
-								local loadedGenCount = 0
+							local possibleGeneratorrNames = { 'generators', 'schematics' }
+							for _, generators in pairs(possibleGeneratorrNames) do
+								if schematics and schematics[generators] then
+									local genCount = 0
+									local loadedGenCount = 0
 
-								for name, gen in pairs(schematics.generators) do
-									genCount = genCount + 1
+									for name, gen in pairs(schematics[generators]) do
+										genCount = genCount + 1
 
-									_M.rf(
-										'./node_modules/'
+										_M.rf(
+											'./node_modules/'
 											.. value
 											.. '/'
 											.. gen.schema,
-										function(schema)
-											add_gen(value, name, schema)
+											function(schema)
+												add_gen(value, name, schema)
 
-											loadedGenCount = loadedGenCount + 1
-											if loadedGenCount == genCount then
-												maybe_continue()
+												loadedGenCount = loadedGenCount + 1
+												if loadedGenCount == genCount then
+													maybe_continue()
+												end
 											end
-										end
-									)
-								end
+										)
+									end
 
-								-- If no generators found for this package, update loadedCount directly
-								if genCount == 0 then
+									-- If no generators found for this package, update loadedCount directly
+									if genCount == 0 then
+										maybe_continue()
+									end
+								else
 									maybe_continue()
 								end
-							else
-								maybe_continue()
 							end
 						end
 					)
