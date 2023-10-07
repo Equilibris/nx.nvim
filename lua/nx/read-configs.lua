@@ -224,13 +224,13 @@ function _M.read_external_generators(callback)
 
 	for _, value in ipairs(deps) do
 		_M.rf('./node_modules/' .. value .. '/package.json', function(f)
-			local function handel_schematic_file(field)
+			local function handle_schematic_file(field)
 				if f[field] then
 					_M.rf(
 						'./node_modules/' .. value .. '/' .. f[field],
 						function(schematics)
-							local possibleGeneratorrNames = { 'generators', 'schematics' }
-							for _, generators in pairs(possibleGeneratorrNames) do
+							local possibleGeneratorNames = { 'generators', 'schematics' }
+							for _, generators in pairs(possibleGeneratorNames) do
 								if schematics and schematics[generators] then
 									local genCount = 0
 									local loadedGenCount = 0
@@ -238,11 +238,7 @@ function _M.read_external_generators(callback)
 									for name, gen in pairs(schematics[generators]) do
 										genCount = genCount + 1
 
-										_M.rf(
-											'./node_modules/'
-											.. value
-											.. '/'
-											.. gen.schema,
+										_M.rf('./node_modules/' .. value .. '/' .. gen.schema,
 											function(schema)
 												add_gen(value, name, schema)
 
@@ -269,8 +265,8 @@ function _M.read_external_generators(callback)
 				end
 			end
 
-			handel_schematic_file 'schematics'
-			handel_schematic_file 'generators'
+			handle_schematic_file 'schematics'
+			handle_schematic_file 'generators'
 		end)
 	end
 
