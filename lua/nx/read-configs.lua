@@ -81,13 +81,13 @@ end
 
 function _M.read_projects(callback)
 	console.log 'Reading individual projects'
-	local projects = _G.nx.graph.nodes or {}
+	local projects = _G.nx.graph.graph.nodes or {}
 	local keys = utils.keys(projects)
 	local count = #keys
 	local loadedCount = 0
 
 	for key, value in pairs(projects) do
-		_M.rf(value .. '/project.json', function(v)
+		_M.rf(value.data.root .. '/project.json', function(v)
 			_G.nx.projects[key] = v
 			loadedCount = loadedCount + 1
 			if loadedCount == count then
@@ -114,7 +114,6 @@ function _M.read_workspace_generators(callback)
 		local function check_all_completed()
 			if loadedCount == count then
 				_G.nx.generators.workspace = gens
-				callback()
 			end
 		end
 
@@ -143,6 +142,59 @@ function _M.read_workspace_generators(callback)
 			callback()
 		end
 	end)
+
+
+	local function add_gen(gensTable, value, name, schema)
+		if schema then
+			table.insert(gensTable, {
+				schema = schema,
+				name = name,
+				run_cmd = 'generate ' .. value .. ':' .. name,
+				package = value,
+			})
+		end
+	end
+
+	local projects = _G.nx.graph.graph.nodes or {}
+	for _, projectSchema in pairs(projects) do
+		local path = projectSchema.data.root
+		_M.rf(path .. '/package.json', function(f)
+			local function handle_schematic_file(field)
+				if f[field] then
+					_M.rf(
+						path .. '/' .. f[field],
+						function(schematics)
+							local possibleGeneratorNames = { 'generators', 'schematics' }
+							for _, generators in pairs(possibleGeneratorNames) do
+								if schematics and schematics[generators] then
+									local genCount = 0
+									local loadedGenCount = 0
+
+									for name, gen in pairs(schematics[generators]) do
+										genCount = genCount + 1
+
+										_M.rf(path .. '/' .. gen.schema,
+											function(schema)
+												add_gen(gens, f.name, name, schema)
+
+												loadedGenCount = loadedGenCount + 1
+											end
+										)
+									end
+
+									-- If no generators found for this package, update loadedCount directly
+								end
+							end
+						end
+					)
+				end
+			end
+
+			handle_schematic_file 'schematics'
+			handle_schematic_file 'generators'
+		end)
+		_G.nx.generators.workspace = gens
+	end
 end
 
 function _M.read_project_graph(callback)
