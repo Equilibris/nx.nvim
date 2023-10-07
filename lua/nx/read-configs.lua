@@ -102,45 +102,6 @@ function _M.read_projects(callback)
 	end
 end
 
-function _M.read_workspace_generators(callback)
-	local gens = {}
-
-	console.log 'Reading workspace generators'
-	_M.scandir('./tools/generators', function(files)
-		local count = #files
-		local loadedCount = 0
-
-		for _, value in ipairs(files) do
-			_M.rf(
-				'./tools/generators/' .. value .. '/schema.json',
-				function(schema)
-					if schema then
-						table.insert(gens, {
-							schema = schema,
-							name = value,
-							run_cmd = 'workspace-generator ' .. value,
-							package = 'workspace-generator',
-						})
-					end
-
-					loadedCount = loadedCount + 1
-					console.log('Adding generator ' .. value)
-					if loadedCount == count then
-						_G.nx.generators.workspace = gens
-						callback()
-					end
-				end
-			)
-		end
-
-		-- If the files table is empty, call the callback directly
-		if count == 0 then
-			_G.nx.generators.workspace = gens
-			callback()
-		end
-	end)
-end
-
 ---Reads workspace generators
 function _M.read_workspace_generators(callback)
 	local gens = {}
