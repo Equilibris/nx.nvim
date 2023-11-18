@@ -278,8 +278,10 @@ function _M.read_external_generators(callback)
 		_M.rf('./node_modules/' .. value .. '/package.json', function(f)
 			local function handle_schematic_file(field)
 				if f[field] then
+					local schematics_path = './node_modules/' .. value .. '/' .. f[field]
+					local schematics_dir = vim.fn.fnamemodify(schematics_path, ':p:h')
 					_M.rf(
-						'./node_modules/' .. value .. '/' .. f[field],
+						schematics_path,
 						function(schematics)
 							local possibleGeneratorNames = { 'generators', 'schematics' }
 							for _, generators in pairs(possibleGeneratorNames) do
@@ -290,7 +292,7 @@ function _M.read_external_generators(callback)
 									for name, gen in pairs(schematics[generators]) do
 										genCount = genCount + 1
 
-										_M.rf('./node_modules/' .. value .. '/' .. gen.schema,
+										_M.rf(schematics_dir .. '/' .. gen.schema,
 											function(schema)
 												add_gen(value, name, schema)
 
