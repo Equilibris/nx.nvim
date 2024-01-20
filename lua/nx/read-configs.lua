@@ -102,7 +102,7 @@ function _M.read_projects(callback)
 	end
 end
 
----Reads workspace generators
+--- Reads workspace generators
 function _M.read_workspace_generators(callback)
 	local gens = {}
 
@@ -143,7 +143,6 @@ function _M.read_workspace_generators(callback)
 		end
 	end)
 
-
 	local function add_gen(gensTable, value, name, schema)
 		if schema then
 			table.insert(gensTable, {
@@ -160,43 +159,76 @@ function _M.read_workspace_generators(callback)
 		local path = projectSchema.data.root
 		_M.rf(path .. '/package.json', function(f)
 			local function handle_schematic_file(field)
-				if f[field] then
-					_M.rf(
-						path .. '/' .. f[field],
-						function(schematics)
-							local possibleGeneratorNames = { 'generators', 'schematics' }
-							for _, generators in pairs(possibleGeneratorNames) do
-								if schematics and schematics[generators] then
-									local genCount = 0
-									local loadedGenCount = 0
+				if field then
+					_M.rf(path .. '/' .. field, function(schematics)
+						if not schematics then
+							console.log(
+								'No schematics found in '
+									.. path
+									.. '/'
+									.. field
+							)
+							return
+						end
 
-									for name, gen in pairs(schematics[generators]) do
-										genCount = genCount + 1
+						local possibleGeneratorNames =
+							{ 'generators', 'schematics' }
+						for _, generators in pairs(possibleGeneratorNames) do
+							if schematics and schematics[generators] then
+								local genCount = 0
+								local loadedGenCount = 0
 
-										_M.rf(path .. '/' .. gen.schema,
-											function(schema)
-												add_gen(gens, f.name, name, schema)
+								for name, gen in pairs(schematics[generators]) do
+									genCount = genCount + 1
 
-												loadedGenCount = loadedGenCount + 1
+									_M.rf(
+										path .. '/' .. gen.schema,
+										function(schema)
+											if schema then
+												add_gen(
+													gens,
+													f.name,
+													name,
+													schema
+												)
+											else
+												console.log(
+													'Error reading schema for '
+														.. name
+														.. ' in '
+														.. path
+														.. '/'
+														.. gen.schema
+												)
 											end
-										)
-									end
 
-									-- If no generators found for this package, update loadedCount directly
+											loadedGenCount = loadedGenCount + 1
+										end
+									)
+								end
+
+								-- If no generators found for this package, update loadedCount directly
+								if genCount == 0 then
+									console.log(
+										'No generators found in '
+											.. path
+											.. '/'
+											.. field
+									)
 								end
 							end
 						end
-					)
+					end)
 				end
 			end
 
 			handle_schematic_file 'schematics'
 			handle_schematic_file 'generators'
 		end)
-		_G.nx.generators.workspace = gens
 	end
-end
 
+	_G.nx.generators.workspace = gens
+end
 function _M.read_project_graph(callback)
 	console.log 'Reading project graph'
 	console.log '---------------------'
@@ -278,42 +310,45 @@ function _M.read_external_generators(callback)
 		_M.rf('./node_modules/' .. value .. '/package.json', function(f)
 			local function handle_schematic_file(field)
 				if f[field] then
-					local schematics_path = './node_modules/' .. value .. '/' .. f[field]
-					local schematics_dir = vim.fn.fnamemodify(schematics_path, ':p:h')
-					_M.rf(
-						schematics_path,
-						function(schematics)
-							local possibleGeneratorNames = { 'generators', 'schematics' }
-							for _, generators in pairs(possibleGeneratorNames) do
-								if schematics and schematics[generators] then
-									local genCount = 0
-									local loadedGenCount = 0
+					local schematics_path = './node_modules/'
+						.. value
+						.. '/'
+						.. f[field]
+					local schematics_dir =
+						vim.fn.fnamemodify(schematics_path, ':p:h')
+					_M.rf(schematics_path, function(schematics)
+						local possibleGeneratorNames =
+							{ 'generators', 'schematics' }
+						for _, generators in pairs(possibleGeneratorNames) do
+							if schematics and schematics[generators] then
+								local genCount = 0
+								local loadedGenCount = 0
 
-									for name, gen in pairs(schematics[generators]) do
-										genCount = genCount + 1
+								for name, gen in pairs(schematics[generators]) do
+									genCount = genCount + 1
 
-										_M.rf(schematics_dir .. '/' .. gen.schema,
-											function(schema)
-												add_gen(value, name, schema)
+									_M.rf(
+										schematics_dir .. '/' .. gen.schema,
+										function(schema)
+											add_gen(value, name, schema)
 
-												loadedGenCount = loadedGenCount + 1
-												if loadedGenCount == genCount then
-													maybe_continue()
-												end
+											loadedGenCount = loadedGenCount + 1
+											if loadedGenCount == genCount then
+												maybe_continue()
 											end
-										)
-									end
+										end
+									)
+								end
 
-									-- If no generators found for this package, update loadedCount directly
-									if genCount == 0 then
-										maybe_continue()
-									end
-								else
+								-- If no generators found for this package, update loadedCount directly
+								if genCount == 0 then
 									maybe_continue()
 								end
+							else
+								maybe_continue()
 							end
 						end
-					)
+					end)
 				else
 					maybe_continue()
 				end
@@ -348,14 +383,14 @@ function _M.read_nx_root(callback)
 				console.log 'Read package.json completed.'
 				_M.read_projects(function()
 					console.log 'Read projects completed.'
-					_M.read_workspace_generators(function()
-						console.log 'Read workspace generators completed.'
-						_M.read_external_generators(function()
-							console.log 'Read external generators completed.'
-							console.log '----------------'
-							callback()
-						end)
+					-- _M.read_workspace_generators(function()
+					-- 	console.log 'Read workspace generators completed.'
+					_M.read_external_generators(function()
+						console.log 'Read external generators completed.'
+						console.log '----------------'
+						callback()
 					end)
+					-- end)
 				end)
 			end)
 		end)
